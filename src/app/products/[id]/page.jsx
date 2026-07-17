@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { authClient } from "@/lib/auth-client";
 import axios from "axios";
 import { 
   Star, 
@@ -17,7 +18,8 @@ import {
   AlertCircle,
   Inbox,
   MessageSquare,
-  Loader2
+  Loader2,
+  Minus
 } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -32,6 +34,9 @@ export default function ProductDetailsPage() {
   const [commentText, setCommentText] = useState("");
   const [userName, setUserName] = useState("");
   const [showReviewSuccess, setShowReviewSuccess] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
+
+
 
   // ✅ Product details fetch
   const { data: product, isLoading, isError } = useQuery({
@@ -87,6 +92,28 @@ export default function ProductDetailsPage() {
     },
     enabled: false
   });
+  const user = authClient.useSession();
+  const userId = user?.data?.user?.id
+
+  // ✅ কার্ট চেক — এই প্রোডাক্টটি কার্টে আছে কিনা
+  const { data: cartData, refetch: refetchCart, isLoading: isCartLoading } = useQuery({
+    queryKey: ["cart", userId],
+    queryFn: async () => {
+      if (!userId) return { cartItems: [] };
+      const response = await axios.get(`${BASE_URL}/api/cart`, {
+        params: { userId }
+      });
+      return response.data;
+    },
+    enabled: !!id && !authChecking && !!userId,
+    staleTime: 0 // সবসময় ফ্রেশ ডেটা নেবে
+  });
+
+  // এই প্রোডাক্টটি কার্টে আছে কিনা চেক করা
+  const cartItem = cartData?.cartItems?.find(
+    (item) => String(item.productId) === String(id)
+  );
+  const isInCart = !!cartItem;
 
   // ✅ Comment Submit - backend এর field name অনুযায়ী: userName, rating, commentText
   const commentMutation = useMutation({
@@ -113,6 +140,34 @@ export default function ProductDetailsPage() {
     setIsRecommendOpen(true);
     refetchAi();
   };
+
+  // ✅ কার্টে প্রোডাক্ট যোগ করা
+  const addToCartMutation = useMutation({
+    mutationFn: async () => {
+      const response = await axios.post(`${BASE_URL}/api/cart/add`, {
+        productId: id,
+        userId: userId || "mock-user-123", // Send user ID from session
+        quantity: 1,
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["cart"]);
+      refetchCart();
+    },
+  });
+
+  // ✅ কার্ট থেকে প্রোডাক্ট সরানো
+  const removeFromCartMutation = useMutation({
+    mutationFn: async () => {
+      const cartId = cartItem?._id; // Use database _id instead of cartId
+      await axios.delete(`${BASE_URL}/api/cart/${cartId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["cart"]);
+      refetchCart();
+    },
+  });
   const handleCommentSubmit = (e) => {
     e.preventDefault();
     if (!commentText.trim() || !userName.trim()) return;
@@ -218,17 +273,51 @@ export default function ProductDetailsPage() {
               <span className="text-xs font-bold text-gray-600 ml-1.5">({product.rating} রেটিং)</span>
             </div>
 
-            {/* Price */}
+            {/* Price + Cart Button */}
             <div className="bg-slate-50 rounded-2xl p-4 flex items-center justify-between border border-slate-100">
               <div>
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">সর্বমোট মূল্য</p>
                 <p className="text-3xl font-black text-gray-900">৳ {product.price}</p>
               </div>
-              <button className="inline-flex items-center gap-2 rounded-full bg-orange-500 hover:bg-orange-600 px-6 py-3 text-sm font-bold text-white shadow-md shadow-orange-100 transition-all hover:scale-[1.02] active:scale-95">
-                <ShoppingBag className="h-4 w-4" />
-                কার্টে যোগ করুন
-              </button>
+
+              {isCartLoading ? (
+                <button disabled className="inline-flex items-center gap-2 rounded-full bg-gray-200 px-6 py-3 text-sm font-bold text-gray-400 cursor-wait">
+                  <Loader2 className="h-4 w-4 animate-spin" /> চেক হচ্ছে...
+                </button>
+              ) : isInCart ? (
+                <div className="flex flex-col items-end gap-1.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-4 py-1.5 text-xs font-bold text-emerald-700">
+                    <Check className="h-3.5 w-3.5" /> কার্টে আছে
+                  </span>
+                  <button
+                    onClick={() => removeFromCartMutation.mutate()}
+                    disabled={removeFromCartMutation.isPending}
+                    className="text-xs font-semibold text-red-400 hover:text-red-600 transition-colors flex items-center gap-1 disabled:opacity-50"
+                  >
+                    {removeFromCartMutation.isPending ? (
+                      <><Loader2 className="h-3 w-3 animate-spin" /> সরানো হচ্ছে...</>
+                    ) : (
+                      <><X className="h-3 w-3" /> কার্ট থেকে সরান</>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => addToCartMutation.mutate()}
+                  disabled={addToCartMutation.isPending || product.stock === 0}
+                  className="inline-flex items-center gap-2 rounded-full bg-orange-500 hover:bg-orange-600 px-6 py-3 text-sm font-bold text-white shadow-md shadow-orange-100 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {addToCartMutation.isPending ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> যোগ হচ্ছে...</>
+                  ) : product.stock === 0 ? (
+                    <>আউট অফ স্টক</>
+                  ) : (
+                    <><ShoppingBag className="h-4 w-4" /> কার্টে যোগ করুন</>
+                  )}
+                </button>
+              )}
             </div>
+
 
             {/* Description */}
             <div className="space-y-2 pt-2">
