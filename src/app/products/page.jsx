@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -18,103 +18,13 @@ import {
   Inbox
 } from "lucide-react";
 
-// Backup fallback local products list in case API fails
-const fallbackProducts = [
-  {
-    _id: "prod-1",
-    name: "প্রিমিয়াম ডগ ফুড - চিকেন ও রাইস ফ্লেভার",
-    category: "খাবার",
-    petType: "dog",
-    price: 1250,
-    rating: 4.8,
-    brand: "Pedigree",
-    image: "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=500",
-    description: "কুকুরছানাদের রোগ প্রতিরোধ ক্ষমতা ও হাড়ের বৃদ্ধির জন্য ওমেগা-৬ এবং দস্তা সমৃদ্ধ প্রিমিয়াম চিকেন ও রাইস ফ্লেভারের ড্রাই ডগ ফুড।"
-  },
-  {
-    _id: "prod-2",
-    name: "ডগ চিউ বোন ডেন্টাল টয়",
-    category: "খেলনা",
-    petType: "dog",
-    price: 350,
-    rating: 4.5,
-    brand: "Kong",
-    image: "https://images.unsplash.com/photo-1576201836106-db1758fd1c97?w=500",
-    description: "কুকুরের দাঁত পরিষ্কার রাখার ও কামড়ানোর অভ্যাস ঠিক রাখার জন্য মজবুত ডেন্টাল চিউ বোন রাবার টয়।"
-  },
-  {
-    _id: "prod-3",
-    name: "প্রিমিয়াম রিফ্লেক্টিভ ডগ হারনেস ও লিশ",
-    category: "এক্সেসরিজ",
-    petType: "dog",
-    price: 950,
-    rating: 4.7,
-    brand: "Ruffwear",
-    image: "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=500",
-    description: "রাতে হাঁটার জন্য লাইট-রিফ্লেক্টিভ স্ট্র্যাপ যুক্ত প্রিমিয়াম ডগ হারনেস ও লিশ সেট।"
-  },
-  {
-    _id: "prod-4",
-    name: "অর্গানিক টুনা ও সালমন ডিশ ক্যাট ক্যান",
-    category: "খাবার",
-    petType: "cat",
-    price: 220,
-    rating: 4.9,
-    brand: "Whiskas",
-    image: "https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=500",
-    description: "সালমন ও টুনা মাছের গ্রেভি সমৃদ্ধ অত্যন্ত সুস্বাদু ভেজা ক্যাট ফুড ক্যান।"
-  },
-  {
-    _id: "prod-5",
-    name: "ক্যাট স্ক্র্যাচিং পোস্ট ও ক্যাসেল টয়",
-    category: "খেলনা",
-    petType: "cat",
-    price: 2450,
-    rating: 4.8,
-    brand: "Frisco",
-    image: "https://images.unsplash.com/photo-1545249390-6bdfa286032f?w=500",
-    description: "বিড়ালের নখ ধারালো করার স্ক্র্যাচিং পোস্ট ও ঘুমানোর আরামদায়ক কুশন ক্যাসেল ডাবল লেভেল ট্রি।"
-  },
-  {
-    _id: "prod-6",
-    name: "আর্গোনমিক ক্যাট ওয়াটার বোল",
-    category: "এক্সেসরিজ",
-    petType: "cat",
-    price: 420,
-    rating: 4.4,
-    brand: "Catit",
-    image: "https://images.unsplash.com/photo-1615087240969-eeff2fa558f2?w=500",
-    description: "বিড়ালের ঘাড়ে ব্যথা না হওয়ার জন্য ১৫ ডিগ্রি বাঁকানো এবং নন-স্লিপ সিরামিক ক্যাট ফিডিং ডিশ বোল।"
-  },
-  {
-    _id: "prod-7",
-    name: "মিক্সড সিডস অ্যান্ড ফ্রুটস বার্ড ফিড",
-    category: "খাবার",
-    petType: "bird",
-    price: 350,
-    rating: 4.7,
-    brand: "ZuPreem",
-    image: "https://images.unsplash.com/photo-1607990283143-e81e7a2c93ab?w=500",
-    description: "বাজরিগার, লাভবার্ড এবং কোকাটেল পাখির জন্য সূর্যমুখী বীজ, চিনা, কাউন এবং শুকনো ফলের টুকরোর পুষ্টিকর মিক্সড বার্ড ফিড।"
-  },
-  {
-    _id: "prod-8",
-    name: "গোল্ডফিশ অ্যান্ড ট্রপিকাল ফ্লেক ফুড",
-    category: "খাবার",
-    petType: "fish",
-    price: 190,
-    rating: 4.8,
-    brand: "Tetra",
-    image: "https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?w=500",
-    description: "অ্যাকোয়ারিয়ামের সোনালী গোল্ডফিশ ও রঙিন ট্রপিকাল মাছের উজ্জ্বল রঙের জন্য বিশেষ পুষ্টিকর ড্রাই ফ্লেক ফুড।"
-  }
-];
+// ক্যাটাগরি API load হওয়ার আগ পর্যন্ত সাময়িক placeholder (ডিজাইন ভাঙবে না, ডেটা এখান থেকে আসে না)
+const placeholderCategories = ["all"];
 
-const categories = ["all", "খাবার", "খেলনা", "এক্সেসরিজ", "গ্রুমিং"];
-
-export default function ProductsPage() {
+function ProductsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
   // Parse state from URL params
   const initialPetType = searchParams.get("petType") || "all";
@@ -149,11 +59,11 @@ export default function ProductsPage() {
     router.push(`/products?${params.toString()}`);
   };
 
-  // React Query fetch
+  // React Query fetch - products
   const { data, isLoading, isError } = useQuery({
     queryKey: ["products", search, petType, category, sort, page],
     queryFn: async () => {
-      const response = await axios.get("http://localhost:5000/api/products", {
+      const response = await axios.get(`${BASE_URL}/api/products`, {
         params: {
           search,
           category,
@@ -168,48 +78,24 @@ export default function ProductsPage() {
     retry: 1
   });
 
-  // Client-side filtering logic for fallback (if Express is offline)
-  const getFilteredFallback = () => {
-    let filtered = [...fallbackProducts];
+  // ✅ React Query fetch - categories (DB থেকে dynamic ভাবে আসবে)
+  const { data: categoriesData, isError: isCategoriesError } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const response = await axios.get("http://localhost:5000/api/categories");
+      return response.data;
+    },
+    retry: 1,
+    staleTime: 5 * 60 * 1000 // ৫ মিনিট পর্যন্ত ক্যাশে রাখবে
+  });
 
-    if (search) {
-      filtered = filtered.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase()));
-    }
-    if (petType !== "all") {
-      filtered = filtered.filter(p => p.petType === petType);
-    }
-    if (category !== "all") {
-      filtered = filtered.filter(p => p.category === category);
-    }
+  const categories = !isCategoriesError && categoriesData?.categories
+    ? ["all", ...categoriesData.categories]
+    : placeholderCategories;
 
-    if (sort === "price_asc") {
-      filtered.sort((a, b) => a.price - b.price);
-    } else if (sort === "price_desc") {
-      filtered.sort((a, b) => b.price - a.price);
-    } else if (sort === "rating_desc") {
-      filtered.sort((a, b) => b.rating - a.rating);
-    }
-
-    // Paginate fallback (9 items per page)
-    const limit = 9;
-    const startIndex = (page - 1) * limit;
-    const paginated = filtered.slice(startIndex, startIndex + limit);
-
-    return {
-      products: paginated,
-      pagination: {
-        total: filtered.length,
-        page: page,
-        limit: limit,
-        pages: Math.ceil(filtered.length / limit)
-      }
-    };
-  };
-
-  // Decide if we use API data or fallback
-  const productsList = !isLoading && !isError && data?.products ? data.products : getFilteredFallback().products;
-  const pagination = !isLoading && !isError && data?.pagination ? data.pagination : getFilteredFallback().pagination;
-  const isUsingFallback = isError;
+  // শুধু backend থেকে যা আসবে সেটাই দেখাবে - কোনো static fallback data নেই
+  const productsList = data?.products || [];
+  const pagination = data?.pagination || { total: 0, page: 1, limit: 9, pages: 0 };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -246,13 +132,8 @@ export default function ProductsPage() {
         <div>
           <h1 className="text-3xl font-black text-gray-900 flex items-center gap-2">
             পেট শপ ক্যাটালগ 
-            {isUsingFallback && (
-              <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                অফলাইন মোড
-              </span>
-            )}
           </h1>
-          <p className="text-gray-500 text-sm mt-1">আপনার পোষা প্রাণীর জন্য সেরা খাবার, খেলনা এবং প্রয়োজনীয় সব জিনিসপত্র এখানে পাবেন।</p>
+          <p className="text-gray-500 text-sm mt-1">আপনার পোষা প্রাণীর জন্য সেরা খাবার, খেলনা এবং প্রয়োজনীয় সব জিনিসপত্র এখানে পাবেন।</p>
         </div>
         
         {/* Search form */}
@@ -283,7 +164,7 @@ export default function ProductsPage() {
               {[
                 { name: "সব প্রাণী", value: "all" },
                 { name: "কুকুর (Dogs)", value: "dog" },
-                { name: "বিড়াল (Cats)", value: "cat" },
+                { name: "বিড়াল (Cats)", value: "cat" },
                 { name: "পাখি (Birds)", value: "bird" },
                 { name: "মাছ (Fish)", value: "fish" }
               ].map((type) => (
@@ -302,7 +183,7 @@ export default function ProductsPage() {
             </div>
           </div>
 
-          {/* Category Filters */}
+          {/* Category Filters - এখন DB থেকে dynamic ভাবে আসছে */}
           <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
               <Filter className="h-4 w-4 text-emerald-500" />
@@ -368,13 +249,25 @@ export default function ProductsPage() {
                 </div>
               ))}
             </div>
+          ) : isError ? (
+            /* Connection / API Error State */
+            <div className="flex flex-col items-center justify-center p-16 bg-white rounded-3xl border border-gray-100 shadow-sm text-center space-y-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-500">
+                <Inbox className="h-8 w-8" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">সার্ভারের সাথে কানেক্ট করা যায়নি!</h3>
+              <p className="text-gray-500 text-sm max-w-sm">
+                ব্যাকএন্ড API (<code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">${BASE_URL}/api/products</code>) থেকে ডেটা আনতে ব্যর্থ হয়েছে।
+                সার্ভার চালু আছে কিনা এবং URL/পোর্ট ঠিক আছে কিনা চেক করুন।
+              </p>
+            </div>
           ) : productsList.length === 0 ? (
             /* Empty State */
             <div className="flex flex-col items-center justify-center p-16 bg-white rounded-3xl border border-gray-100 shadow-sm text-center space-y-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
                 <Inbox className="h-8 w-8" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900">কোনো পণ্য পাওয়া যায়নি!</h3>
+              <h3 className="text-lg font-bold text-gray-900">কোনো পণ্য পাওয়া যায়নি!</h3>
               <p className="text-gray-500 text-sm max-w-sm">আপনার সার্চ বা সিলেক্ট করা ফিল্টারের সাথে মিলে এমন কোনো প্রোডাক্ট ক্যাটালগে নেই। অনুগ্রহ করে অন্য কিছু খুঁজুন।</p>
               <button
                 onClick={() => {
@@ -411,7 +304,7 @@ export default function ProductsPage() {
                     </div>
                     {/* Pet Type Tag */}
                     <div className="absolute top-3 right-3 rounded-full bg-slate-900/80 backdrop-blur-sm px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wider">
-                      {prod.petType === "dog" ? "কুকুর" : prod.petType === "cat" ? "বিড়াল" : prod.petType === "bird" ? "পাখি" : prod.petType === "fish" ? "মাছ" : "অন্যান্য"}
+                      {prod.petType === "dog" ? "কুকুর" : prod.petType === "cat" ? "বিড়াল" : prod.petType === "bird" ? "পাখি" : prod.petType === "fish" ? "মাছ" : "অন্যান্য"}
                     </div>
                   </div>
 
@@ -480,5 +373,19 @@ export default function ProductsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 w-full animate-pulse space-y-8">
+        <div className="h-6 w-20 bg-gray-200 rounded-full" />
+        <div className="h-10 w-full bg-gray-200 rounded-2xl" />
+        <div className="h-64 w-full bg-gray-200 rounded-3xl" />
+      </div>
+    }>
+      <ProductsContent />
+    </Suspense>
   );
 }

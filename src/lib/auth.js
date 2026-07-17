@@ -10,7 +10,7 @@ let db;
 try {
   client = new MongoClient(MONGODB_URI);
   // We don't block auth startup, but we reference the database
-  db = client.db();
+  db = client.db('petzone');
 } catch (error) {
   console.error("MongoDB Client error in Auth setup:", error);
 }

@@ -53,11 +53,9 @@ export default function AIChatWidget() {
       // Map frontend history format to backend history format
       const historyPayload = newMessages.slice(1, -1); // Exclude initial welcome and current message
 
-      const response = await axios.post("http://localhost:5000/api/ai/chat", {
+      const response = await axios.post("/api/ai/chat", {
         message: text,
         history: historyPayload
-      }, {
-        withCredentials: true
       });
 
       setMessages(prev => [...prev, { role: "model", content: response.data.reply }]);
@@ -66,7 +64,7 @@ export default function AIChatWidget() {
       // Friendly offline fallback response
       setMessages(prev => [...prev, { 
         role: "model", 
-        content: "দুঃখিত, এআই অ্যাসিস্ট্যান্ট সার্ভারের সাথে সংযোগ করতে পারছে না। অনুগ্রহ করে নিশ্চিত করুন যে আপনার ব্যাকএন্ড সার্ভারটি (Port 5000) সচল আছে।" 
+        content: "দুঃখিত, এআই অ্যাসিস্ট্যান্টের সাথে সংযোগ করতে সমস্যা হচ্ছে। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।" 
       }]);
     } finally {
       setIsLoading(false);
