@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import { 
   ArrowRight, 
   Sparkles, 
@@ -32,35 +34,62 @@ export default function Home() {
     { name: "মাছ (Fish)", count: "৫০+ পণ্য", icon: "🐠", color: "from-cyan-400 to-blue-500", query: "fish" }
   ];
 
-  const featuredProducts = [
-    {
-      id: "prod-1",
-      name: "প্রিমিয়াম ডগ ফুড - চিকেন ও রাইস ফ্লেভার",
-      category: "খাবার",
-      petType: "dog",
-      price: 1250,
-      rating: 4.8,
-      image: "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=500&auto=format&fit=crop&q=60"
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+  const { data: productsData, isLoading: isProductsLoading } = useQuery({
+    queryKey: ["best-sellers"],
+    queryFn: async () => {
+      const response = await axios.get(`${BASE_URL}/api/products`, {
+        params: {
+          sort: "rating_desc",
+          limit: 3
+        }
+      });
+      return response.data;
     },
-    {
-      id: "prod-2",
-      name: "ইন্টারঅ্যাক্টিভ বিড়ালের খেলার বল (টয়)",
-      category: "খেলনা",
-      petType: "cat",
-      price: 450,
-      rating: 4.6,
-      image: "https://images.unsplash.com/photo-1545249390-6bdfa286032f?w=500&auto=format&fit=crop&q=60"
-    },
-    {
-      id: "prod-3",
-      name: "পাখির খাঁচার প্রিমিয়াম কাঠের দোলনা",
-      category: "এক্সেসরিজ",
-      petType: "bird",
-      price: 320,
-      rating: 4.5,
-      image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500&auto=format&fit=crop&q=60"
-    }
-  ];
+    retry: 1
+  });
+
+  const featuredProducts = productsData?.products && productsData.products.length > 0
+    ? productsData.products.map(p => ({
+        id: p._id || p.id,
+        name: p.name,
+        category: p.category,
+        petType: p.petType,
+        price: p.price,
+        rating: p.rating,
+        image: p.image
+      }))
+    : [
+        {
+          id: "prod-1",
+          name: "প্রিমিয়াম ডগ ফুড - চিকেন ও রাইস ফ্লেভার",
+          category: "খাবার",
+          petType: "dog",
+          price: 1250,
+          rating: 4.8,
+          image: "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=500&auto=format&fit=crop&q=60"
+        },
+        {
+          id: "prod-2",
+          name: "ইন্টারঅ্যাক্টিভ বিড়ালের খেলার বল (টয়)",
+          category: "খেলনা",
+          petType: "cat",
+          price: 450,
+          rating: 4.6,
+          image: "https://images.unsplash.com/photo-1545249390-6bdfa286032f?w=500&auto=format&fit=crop&q=60"
+        },
+        {
+          id: "prod-3",
+          name: "পাখির খাঁচার প্রিমিয়াম কাঠের দোলনা",
+          category: "এক্সেসরিজ",
+          petType: "bird",
+          price: 320,
+          rating: 4.5,
+          image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500&auto=format&fit=crop&q=60"
+        }
+      ];
+
 
   const faqItems = [
     {
@@ -189,39 +218,57 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {featuredProducts.map((prod) => (
-              <div 
-                key={prod.id} 
-                className="group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:shadow-2xl transition-all duration-300 flex flex-col h-full"
-              >
-                <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
-                  <img
-                    src={prod.image}
-                    alt={prod.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 left-3 rounded-full bg-white/90 backdrop-blur-sm px-3 py-1 text-xs font-bold text-orange-600 flex items-center gap-1 shadow-sm">
-                    <Star className="h-3 w-3 fill-orange-500 text-orange-500" />
-                    {prod.rating}
+            {isProductsLoading ? (
+              [...Array(3)].map((_, i) => (
+                <div key={i} className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm animate-pulse h-[380px] flex flex-col">
+                  <div className="bg-gray-200 w-full h-[200px]" />
+                  <div className="p-6 space-y-3 flex-1 flex flex-col justify-between">
+                    <div className="space-y-2">
+                      <div className="h-3 w-16 bg-gray-200 rounded-full" />
+                      <div className="h-4 w-full bg-gray-200 rounded-full" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="h-6 w-20 bg-gray-200 rounded-full" />
+                      <div className="h-8 w-24 bg-gray-200 rounded-full" />
+                    </div>
                   </div>
                 </div>
-                <div className="p-6 flex flex-col flex-1">
-                  <span className="text-xs font-semibold text-emerald-500 uppercase tracking-wider mb-2">{prod.category}</span>
-                  <h3 className="text-base font-bold text-gray-800 mb-3 line-clamp-2 hover:text-orange-500 transition-colors">
-                    <Link href={`/products/${prod.id}`}>{prod.name}</Link>
-                  </h3>
-                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
-                    <span className="text-lg font-black text-gray-900">৳ {prod.price}</span>
-                    <Link
-                      href={`/products/${prod.id}`}
-                      className="rounded-full bg-gray-900 px-4 py-2 text-xs font-bold text-white hover:bg-orange-500 transition-colors"
-                    >
-                      বিস্তারিত দেখুন
-                    </Link>
+              ))
+            ) : (
+              featuredProducts.map((prod) => (
+                <div 
+                  key={prod.id} 
+                  className="group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:shadow-2xl transition-all duration-300 flex flex-col h-full"
+                >
+                  <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
+                    <img
+                      src={prod.image}
+                      alt={prod.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-3 left-3 rounded-full bg-white/90 backdrop-blur-sm px-3 py-1 text-xs font-bold text-orange-600 flex items-center gap-1 shadow-sm">
+                      <Star className="h-3 w-3 fill-orange-500 text-orange-500" />
+                      {prod.rating}
+                    </div>
+                  </div>
+                  <div className="p-6 flex flex-col flex-1">
+                    <span className="text-xs font-semibold text-emerald-500 uppercase tracking-wider mb-2">{prod.category}</span>
+                    <h3 className="text-base font-bold text-gray-800 mb-3 line-clamp-2 hover:text-orange-500 transition-colors">
+                      <Link href={`/products/${prod.id}`}>{prod.name}</Link>
+                    </h3>
+                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
+                      <span className="text-lg font-black text-gray-900">৳ {prod.price}</span>
+                      <Link
+                        href={`/products/${prod.id}`}
+                        className="rounded-full bg-gray-900 px-4 py-2 text-xs font-bold text-white hover:bg-orange-500 transition-colors"
+                      >
+                        বিস্তারিত দেখুন
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </section>

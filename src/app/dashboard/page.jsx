@@ -28,8 +28,27 @@ export default function DashboardPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [mounted, setMounted] = useState(false);
+  const { data: sessionData, isPending: authPending } = authClient.useSession();
+  const [mockSession, setMockSession] = useState(null);
+  const [sessionChecking, setSessionChecking] = useState(true);
 
-  const [authChecking, setAuthChecking] = useState(true);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const mock = localStorage.getItem("petzone_mock_session");
+      if (mock) {
+        try {
+          setMockSession(JSON.parse(mock));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      setSessionChecking(false);
+      setMounted(true);
+    }
+  }, []);
+
+  const session = sessionData || mockSession;
+  const authChecking = authPending && sessionChecking;
 
   // Checkout workflow step: 'cart' | 'shipping' | 'payment' | 'success'
   const [step, setStep] = useState("cart");
@@ -45,12 +64,13 @@ export default function DashboardPage() {
   const [paymentNumber, setPaymentNumber] = useState(""); // For bkash/nagad
   const [isPaying, setIsPaying] = useState(false);
 
-  
+  const userId = session?.user?.id;
 
-  // Get current userId
-  const user = authClient.useSession();
-  const userId = user?.data?.user?.id
-  console.log(userId);
+  useEffect(() => {
+    if (!authChecking && !session) {
+      router.push(`/login?redirect=/dashboard`);
+    }
+  }, [session, authChecking, router]);
 
   // Fetch Cart Items for specific user
   const { data: cartData, isLoading: isCartLoading, refetch: refetchCart } = useQuery({
@@ -120,16 +140,16 @@ export default function DashboardPage() {
     }, 2000);
   };
 
-  // if (!mounted || authChecking) {
-  //   return (
-  //     <div className="flex-1 flex items-center justify-center bg-slate-50 min-h-screen">
-  //       <div className="text-center space-y-4">
-  //         <div className="h-10 w-10 animate-spin border-4 border-orange-500 border-t-transparent rounded-full mx-auto" />
-  //         <p className="text-sm font-bold text-gray-500">লোডিং ড্যাশবোর্ড...</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if (!mounted || authChecking || !session) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-slate-50 min-h-screen">
+        <div className="text-center space-y-4">
+          <div className="h-10 w-10 animate-spin border-4 border-orange-500 border-t-transparent rounded-full mx-auto" />
+          <p className="text-sm font-bold text-gray-500">লোডিং ড্যাশবোর্ড...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 w-full space-y-8 animate-fade-in">
@@ -142,7 +162,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-black">আমার ড্যাশবোর্ড</h1>
-              <p className="text-sm text-orange-50/90 font-medium">স্বাগতম, {user?.data?.user?.name || "ইউজার"}</p>
+              {/* <p className="text-sm text-orange-50/90 font-medium">স্বাগতম, {user?.data?.user?.name || "ইউজার"}</p> */}
             </div>
           </div>
         </div>

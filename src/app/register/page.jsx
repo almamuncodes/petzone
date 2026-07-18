@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { 
   PawPrint, 
@@ -15,8 +15,11 @@ import {
   Sparkles
 } from "lucide-react";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect") || "/dashboard";
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,8 +54,7 @@ export default function RegisterPage() {
       if (authError) {
         setError(authError.message || "রেজিস্ট্রেশন সম্পন্ন করা যায়নি।");
       } else {
-        router.push("/dashboard");
-        setTimeout(() => window.location.reload(), 500);
+        window.location.href = redirect;
       }
     } catch (err) {
       console.error("Registration error:", err);
@@ -64,9 +66,12 @@ export default function RegisterPage() {
 
   const handleGoogleLogin = async () => {
     try {
+      const absoluteCallbackURL = typeof window !== "undefined" 
+        ? window.location.origin + redirect 
+        : redirect;
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard"
+        callbackURL: absoluteCallbackURL
       });
     } catch (err) {
       setError("গুগল লগইন সম্পন্ন করা যায়নি।");
@@ -74,7 +79,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-amber-500/5 to-transparent">
+    <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-amber-500/5 to-transparent">
       <div className="max-w-md w-full bg-white p-8 rounded-3xl border border-gray-100 shadow-xl space-y-6">
         
         {/* Brand Header */}
@@ -192,18 +197,36 @@ export default function RegisterPage() {
         <div className="text-center space-y-1 pt-2">
           <p className="text-xs text-gray-500">
             ইতিমধ্যে অ্যাকাউন্ট আছে?{" "}
-            <Link href="/login" className="font-bold text-orange-500 hover:text-orange-600 inline-flex items-center gap-0.5">
+            <Link 
+              href={redirect !== "/dashboard" ? `/login?redirect=${encodeURIComponent(redirect)}` : "/login"} 
+              className="font-bold text-orange-500 hover:text-orange-600 inline-flex items-center gap-0.5"
+            >
               লগইন করুন
               <ArrowRight className="h-3 w-3" />
             </Link>
           </p>
           <p className="text-[10px] text-emerald-600 font-semibold flex items-center justify-center gap-1">
             <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-            টেস্ট করার জন্য সরাসরি <Link href="/login" className="underline font-bold text-emerald-700 hover:text-orange-500">লগইন পেজে</Link> গিয়ে ডেমো লগইন করুন।
+            টেস্ট করার জন্য সরাসরি <Link href={redirect !== "/dashboard" ? `/login?redirect=${encodeURIComponent(redirect)}` : "/login"} className="underline font-bold text-emerald-700 hover:text-orange-500">লগইন পেজে</Link> গিয়ে ডেমো লগইন করুন।
           </p>
         </div>
 
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex-1 flex items-center justify-center bg-slate-50 min-h-screen">
+        <div className="text-center space-y-4">
+          <div className="h-10 w-10 animate-spin border-4 border-orange-500 border-t-transparent rounded-full mx-auto" />
+          <p className="text-sm font-bold text-gray-500">লোডিং...</p>
+        </div>
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   );
 }

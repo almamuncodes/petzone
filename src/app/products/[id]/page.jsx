@@ -34,9 +34,26 @@ export default function ProductDetailsPage() {
   const [commentText, setCommentText] = useState("");
   const [userName, setUserName] = useState("");
   const [showReviewSuccess, setShowReviewSuccess] = useState(false);
-  const [authChecking, setAuthChecking] = useState(true);
+  const { data: sessionData, isPending: authPending } = authClient.useSession();
+  const [mockSession, setMockSession] = useState(null);
+  const [sessionChecking, setSessionChecking] = useState(true);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const mock = localStorage.getItem("petzone_mock_session");
+      if (mock) {
+        try {
+          setMockSession(JSON.parse(mock));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      setSessionChecking(false);
+    }
+  }, []);
 
+  const session = sessionData || mockSession;
+  const authChecking = authPending && sessionChecking;
 
   // ✅ Product details fetch
   const { data: product, isLoading, isError } = useQuery({
@@ -92,8 +109,14 @@ export default function ProductDetailsPage() {
     },
     enabled: false
   });
-  const user = authClient.useSession();
-  const userId = user?.data?.user?.id
+  
+  const userId = session?.user?.id;
+
+  useEffect(() => {
+    if (!authChecking && !session) {
+      router.push(`/login?redirect=/products/${id}`);
+    }
+  }, [session, authChecking, id, router]);
 
   // ✅ কার্ট চেক — এই প্রোডাক্টটি কার্টে আছে কিনা
   const { data: cartData, refetch: refetchCart, isLoading: isCartLoading } = useQuery({

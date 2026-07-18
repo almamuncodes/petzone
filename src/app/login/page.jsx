@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { 
   PawPrint, 
@@ -14,8 +14,11 @@ import {
   AlertCircle
 } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect") || "/dashboard";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -35,8 +38,7 @@ export default function LoginPage() {
       if (authError) {
         setError(authError.message || "ইমেইল বা পাসওয়ার্ড ভুল হয়েছে।");
       } else {
-        router.push("/dashboard");
-        setTimeout(() => window.location.reload(), 500);
+        window.location.href = redirect;
       }
     } catch (err) {
       console.error("Login error:", err);
@@ -48,21 +50,22 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     try {
+      const absoluteCallbackURL = typeof window !== "undefined" 
+        ? window.location.origin + redirect 
+        : redirect;
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard"
+        callbackURL: absoluteCallbackURL
       });
     } catch (err) {
       setError("গুগল লগইন সম্পন্ন করা যায়নি। অনুগ্রহ করে ডেমো লগইন ট্রাই করুন।");
     }
   };
 
-  // Demo Login fallback for easy testing out-of-the-box
   const handleDemoLogin = () => {
     setLoading(true);
     setError("");
     
-    // Store mock session in localStorage for offline fallback
     const mockSession = {
       user: {
         id: "mock-admin-id-12345",
@@ -80,19 +83,16 @@ export default function LoginPage() {
     try {
       localStorage.setItem("petzone_mock_session", JSON.stringify(mockSession));
       
-      // Attempt login via better-auth database if connected
       authClient.signIn.email({
         email: "admin@petzone.com",
         password: "adminpassword"
       }).catch(() => {
-        // Silently swallow better-auth failure in offline mode
         console.log("Using local mock session fallback.");
       });
 
       setTimeout(() => {
-        router.push("/dashboard");
-        setTimeout(() => window.location.reload(), 500);
-      }, 800);
+        window.location.href = redirect;
+      }, 500);
     } catch (err) {
       setError("ডেমো লগইন ব্যর্থ হয়েছে।");
       setLoading(false);
@@ -100,7 +100,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-amber-500/5 to-transparent">
+    <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-amber-500/5 to-transparent">
       <div className="max-w-md w-full bg-white p-8 rounded-3xl border border-gray-100 shadow-xl space-y-6">
         
         {/* Brand Header */}
@@ -195,7 +195,10 @@ export default function LoginPage() {
         {/* Redirect options */}
         <p className="text-center text-xs text-gray-500">
           নতুন গ্রাহক?{" "}
-          <Link href="/register" className="font-bold text-orange-500 hover:text-orange-600 inline-flex items-center gap-0.5">
+          <Link 
+            href={redirect !== "/dashboard" ? `/register?redirect=${encodeURIComponent(redirect)}` : "/register"} 
+            className="font-bold text-orange-500 hover:text-orange-600 inline-flex items-center gap-0.5"
+          >
             রেজিস্টার করুন
             <ArrowRight className="h-3 w-3" />
           </Link>
@@ -203,5 +206,20 @@ export default function LoginPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex-1 flex items-center justify-center bg-slate-50 min-h-screen">
+        <div className="text-center space-y-4">
+          <div className="h-10 w-10 animate-spin border-4 border-orange-500 border-t-transparent rounded-full mx-auto" />
+          <p className="text-sm font-bold text-gray-500">লোডিং...</p>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
