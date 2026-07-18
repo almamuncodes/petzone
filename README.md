@@ -1,36 +1,232 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🐾 PetZone AI
 
-## Getting Started
+> An AI-powered modern Pet Shop platform where users can discover pets, explore pet products, receive AI-powered recommendations, and enjoy a seamless shopping experience.
 
-First, run the development server:
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![React](https://img.shields.io/badge/React-19-61DAFB)
+![MongoDB](https://img.shields.io/badge/MongoDB-Green)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-38BDF8)
+![BetterAuth](https://img.shields.io/badge/Auth-BetterAuth-orange)
+![License](https://img.shields.io/badge/License-MIT-blue)
+
+---
+
+## 📖 About
+
+PetZone AI is a modern full-stack pet marketplace built with **Next.js** and **MongoDB**. It provides an intelligent shopping experience by integrating AI to recommend pet products based on the selected pet, user needs, and product information.
+
+The platform offers secure authentication, responsive design, product management, role-based dashboards, and AI-assisted recommendations to help pet owners make better purchasing decisions.
+
+---
+
+## ✨ Features
+
+### 👤 Authentication
+- Secure Login & Registration
+- BetterAuth Authentication
+- Protected Routes
+- Role-Based Authorization
+
+### 🐶 Pet Marketplace
+- Browse Pets
+- Pet Details Page
+- Product Categories
+- Product Search
+- Product Filtering
+
+### 🤖 AI Features
+- AI Product Recommendation
+- AI Pet Care Suggestions
+- AI Chat Assistant
+- Smart Product Guidance
+
+### 🛒 Shopping
+- Product Details
+- Related Products
+- Responsive Product Cards
+
+### 📊 Dashboard
+- User Dashboard
+- Admin Dashboard
+- Product Management
+- User Management
+
+### 🎨 UI/UX
+- Fully Responsive
+- Modern Design
+- Smooth Animations
+- Mobile Friendly
+- Dark & Clean Interface
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+- Next.js 16
+- React 19
+- Tailwind CSS
+- DaisyUI
+- Lucide React
+
+### Backend
+- Next.js Server Actions
+- MongoDB
+- BetterAuth
+
+### AI
+- Google Gemini API
+
+### Image Hosting
+- Cloudinary
+
+### Deployment
+- Vercel
+
+---
+
+## 📂 Project Structure
+
+```
+src/
+│
+├── app/
+├── components/
+├── actions/
+├── lib/
+├── hooks/
+├── providers/
+├── utils/
+└── services/
+```
+
+---
+
+## 🚀 Installation
+
+### Clone Repository
+
+```bash
+git clone https://github.com/almamuncodes/petzone.git
+```
+
+### Go to Project
+
+```bash
+cd petzone
+```
+
+### Install Packages
+
+```bash
+npm install
+```
+
+### Setup Environment Variables
+
+Create a `.env.local`
+
+```env
+MONGODB_URI=
+
+BETTER_AUTH_SECRET=
+BETTER_AUTH_URL=
+
+GOOGLE_GENERATIVE_AI_API_KEY=
+
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+```
+
+### Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+```
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 📸 Screenshots
 
-To learn more about Next.js, take a look at the following resources:
+Add screenshots here.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+Home Page
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Products Page
 
-## Deploy on Vercel
+Pet Details
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+AI Recommendation
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Dashboard
+```
+
+---
+
+## 🌟 Future Improvements
+
+- Wishlist
+- Shopping Cart
+- Payment Gateway
+- Order Tracking
+- AI Health Assistant
+- AI Image Recognition
+- Reviews & Ratings
+- Notifications
+
+---
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome.
+
+1. Fork the repository
+2. Create a feature branch
+
+```bash
+git checkout -b feature-name
+```
+
+3. Commit changes
+
+```bash
+git commit -m "Added new feature"
+```
+
+4. Push changes
+
+```bash
+git push origin feature-name
+```
+
+5. Open a Pull Request
+
+---
+
+## 👨‍💻 Developer
+
+**MD Al-Mamun Islam**
+
+GitHub:
+https://github.com/almamuncodes
+
+LinkedIn:
+https://linkedin.com/in/almamunislam
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+⭐ If you like this project, don't forget to **Star** the repository.
